@@ -2,6 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>踩地雷</title>
   <style>
     body {
@@ -11,12 +12,12 @@
       padding: 40px 10px;
     }
     h1 {
-      color: #c71585;
-      font-size: 32px;
+      color: #000;
+      font-size: 28px;
       margin-bottom: 8px;
     }
     p.intro {
-      font-size: 20px;
+      font-size: 18px;
       color: #555;
       margin-bottom: 20px;
     }
@@ -24,18 +25,20 @@
       display: grid;
       grid-template-columns: repeat(20, 30px);
       grid-template-rows: repeat(20, 30px);
-      gap: 2px; /* Windows經典踩地雷格子間隔 */
+      gap: 2px;
       justify-content: center;
       margin: 0 auto;
       user-select: none;
+      width: fit-content;
+      transform-origin: top center;
     }
     .cell {
       width: 30px;
       height: 30px;
-      background: #c0c0c0; /* Windows經典灰色 */
-      border-top: 2px solid #fff;  /* 高光邊 */
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
       border-left: 2px solid #fff;
-      border-bottom: 2px solid #7f7f7f; /* 陰影邊 */
+      border-bottom: 2px solid #7f7f7f;
       border-right: 2px solid #7f7f7f;
       display: flex;
       justify-content: center;
@@ -45,7 +48,6 @@
       cursor: pointer;
       box-sizing: border-box;
       transition: background-color 0.2s;
-      user-select: none;
     }
     .cell.revealed {
       background: #e0e0e0;
@@ -56,13 +58,11 @@
     .mine {
       font-size: 28px;
       color: #ff1493;
-      user-select: none;
     }
     #message {
       margin-top: 20px;
       font-size: 18px;
       color: #c71585;
-      user-select: none;
     }
     #reset {
       margin-top: 20px;
@@ -73,13 +73,11 @@
       color: white;
       border-radius: 5px;
       cursor: pointer;
-      user-select: none;
     }
     #footer {
       margin-top: 30px;
       font-size: 14px;
       color: #aaa;
-      user-select: none;
     }
   </style>
 </head>
@@ -91,71 +89,22 @@
   <div id="footer">By Zhe Han</div>
 
   <script>
-    const width = 20;
-    const height = 20;
     const board = document.getElementById("board");
     const message = document.getElementById("message");
 
+    const width = 20;
+    const height = 20;
     let clickCount = 0;
     let gameOver = false;
     const fixedNumbers = [1, 3, 1, 4];
 
-    // 5x7 點陣字形 (1=顯示爆炸符號💥, 0=空白)
     const letters = {
-      "I": [
-        [1,1,1,1,1],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [1,1,1,1,1],
-      ],
-      "❤": [
-        [0,0,0,0,0],
-        [0,1,0,1,0],
-        [1,0,1,0,1],
-        [1,0,0,0,1],
-        [0,1,0,1,0],
-        [0,0,1,0,0],
-        [0,0,0,0,0],
-      ],
-      "U": [
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
-      ],
-      "5": [
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,1,1,1,0],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
-      ],
-      "2": [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,1,0],
-        [0,0,1,0,0],
-        [0,1,0,0,0],
-        [1,1,1,1,1],
-      ],
-      "0": [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
-      ],
+      "I": [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1]],
+      "❤": [[0,0,0,0,0],[0,1,0,1,0],[1,0,1,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,0,0,0]],
+      "U": [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+      "5": [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+      "2": [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,1,1,1,1]],
+      "0": [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]]
     };
 
     function init() {
@@ -175,11 +124,10 @@
 
       document.querySelectorAll(".cell").forEach(cell => {
         cell.addEventListener("click", () => {
-          if (gameOver) return;
+          if (gameOver || cell.classList.contains("revealed")) return;
+
           const x = +cell.dataset.x;
           const y = +cell.dataset.y;
-          if (cell.classList.contains("revealed")) return;
-
           clickCount++;
 
           if (clickCount < 5) {
@@ -195,19 +143,28 @@
       });
 
       message.textContent = "";
+      resizeBoard(); // 呼叫縮放
     }
 
-    // 畫字函數，用💥填滿點陣位置
+    function resizeBoard() {
+      const screenWidth = window.innerWidth;
+      const idealWidth = width * 32; // 每格30px + 2px間隔
+      const scale = Math.min(1, screenWidth / idealWidth);
+      board.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener("resize", resizeBoard);
+
     function drawLetter(letter, startX, startY) {
       const pattern = letters[letter];
       if (!pattern) return;
-      for(let y=0; y < pattern.length; y++) {
-        for(let x=0; x < pattern[y].length; x++) {
+      for(let y = 0; y < pattern.length; y++) {
+        for(let x = 0; x < pattern[y].length; x++) {
           const cell = document.querySelector(`[data-x='${startX + x}'][data-y='${startY + y}']`);
           if(cell) {
             if(pattern[y][x] === 1) {
               cell.classList.add("revealed");
-              cell.style.backgroundColor = "#e0e0e0";  /* Windows踩地雷字底色 */
+              cell.style.backgroundColor = "#e0e0e0";
               cell.textContent = "💥";
             } else {
               cell.classList.remove("revealed");
@@ -220,14 +177,13 @@
     }
 
     function displayLoveMessage(lastX, lastY) {
-      // 清空所有格子，但保留最後點擊格子空白
       document.querySelectorAll(".cell").forEach(cell => {
         const cx = +cell.dataset.x;
         const cy = +cell.dataset.y;
         if(cx === lastX && cy === lastY) {
           cell.textContent = "";
           cell.classList.remove("revealed", "mine");
-          cell.style.backgroundColor = "#c0c0c0"; // 維持灰色底色
+          cell.style.backgroundColor = "#c0c0c0";
           cell.style.borderTop = "2px solid #fff";
           cell.style.borderLeft = "2px solid #fff";
           cell.style.borderBottom = "2px solid #7f7f7f";
@@ -235,7 +191,7 @@
         } else {
           cell.textContent = "";
           cell.classList.add("revealed");
-          cell.style.backgroundColor = "#e0e0e0"; // 變淺灰色內凹背景
+          cell.style.backgroundColor = "#e0e0e0";
           cell.style.border = "1px solid #7f7f7f";
           cell.style.boxShadow = "inset 1px 1px 2px #fff, inset -1px -1px 2px #7f7f7f";
         }
@@ -246,12 +202,10 @@
       const upperY = 3;
       const lowerY = 11;
 
-      // 畫「I❤U」
       drawLetter("I", startX, upperY);
       drawLetter("❤", startX + 5 + gap, upperY);
       drawLetter("U", startX + (5 + gap)*2, upperY);
 
-      // 畫「520」
       drawLetter("5", startX, lowerY);
       drawLetter("2", startX + 5 + gap, lowerY);
       drawLetter("0", startX + (5 + gap)*2, lowerY);
