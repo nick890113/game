@@ -2,7 +2,6 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>踩地雷</title>
   <style>
     body {
@@ -10,16 +9,26 @@
       background: #ffffff;
       text-align: center;
       padding: 40px 10px;
+      user-select: none;
     }
     h1 {
       color: #000;
       font-size: 28px;
       margin-bottom: 8px;
     }
-    p.intro {
-      font-size: 18px;
-      color: #555;
-      margin-bottom: 20px;
+    #scoreboard {
+      width: 640px; /* 20格 x 30px + gap */
+      margin: 0 auto 12px auto;
+      padding: 6px 10px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #7f7f7f;
+      border-right: 2px solid #7f7f7f;
+      color: #000;
+      box-sizing: border-box;
     }
     #board {
       display: grid;
@@ -28,9 +37,6 @@
       gap: 2px;
       justify-content: center;
       margin: 0 auto;
-      user-select: none;
-      width: fit-content;
-      transform-origin: top center;
     }
     .cell {
       width: 30px;
@@ -48,16 +54,20 @@
       cursor: pointer;
       box-sizing: border-box;
       transition: background-color 0.2s;
+      user-select: none;
+      color: #000;
     }
     .cell.revealed {
       background: #e0e0e0;
       border: 1px solid #7f7f7f;
       box-shadow: inset 1px 1px 2px #fff, inset -1px -1px 2px #7f7f7f;
       cursor: default;
+      color: #000;
     }
     .mine {
       font-size: 28px;
       color: #ff1493;
+      user-select: none;
     }
     #message {
       margin-top: 20px;
@@ -68,49 +78,109 @@
       margin-top: 20px;
       padding: 8px 16px;
       font-size: 16px;
-      background-color: #ff69b4;
+      background-color: #ccc;
       border: none;
-      color: white;
+      color: #000;
       border-radius: 5px;
       cursor: pointer;
+      user-select: none;
     }
     #footer {
       margin-top: 30px;
       font-size: 14px;
       color: #aaa;
+      user-select: none;
     }
   </style>
 </head>
 <body>
   <h1>踩地雷</h1>
+  <div id="scoreboard">得分：0</div>
   <div id="board"></div>
   <div id="message"></div>
   <button id="reset" onclick="init()">重新開始</button>
   <div id="footer">By Zhe Han</div>
 
   <script>
-    const board = document.getElementById("board");
-    const message = document.getElementById("message");
-
     const width = 20;
     const height = 20;
+    const board = document.getElementById("board");
+    const message = document.getElementById("message");
+    const scoreboard = document.getElementById("scoreboard");
+
     let clickCount = 0;
+    let score = 0;
     let gameOver = false;
     const fixedNumbers = [1, 3, 1, 4];
 
+    // 5x7 點陣字形 (1=顯示爆炸符號💥, 0=空白)
     const letters = {
-      "I": [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1]],
-      "❤": [[0,0,0,0,0],[0,1,0,1,0],[1,0,1,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,0,0,0]],
-      "U": [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-      "5": [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-      "2": [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,1,1,1,1]],
-      "0": [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]]
+      "I": [
+        [1,1,1,1,1],
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+        [1,1,1,1,1],
+      ],
+      "❤": [
+        [0,0,0,0,0],
+        [0,1,0,1,0],
+        [1,0,1,0,1],
+        [1,0,0,0,1],
+        [0,1,0,1,0],
+        [0,0,1,0,0],
+        [0,0,0,0,0],
+      ],
+      "U": [
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
+      "5": [
+        [1,1,1,1,1],
+        [1,0,0,0,0],
+        [1,1,1,1,0],
+        [0,0,0,0,1],
+        [0,0,0,0,1],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
+      "2": [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [0,0,0,0,1],
+        [0,0,0,1,0],
+        [0,0,1,0,0],
+        [0,1,0,0,0],
+        [1,1,1,1,1],
+      ],
+      "0": [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
     };
+
+    function updateScore() {
+      scoreboard.textContent = `得分：${score}`;
+    }
 
     function init() {
       board.innerHTML = "";
       clickCount = 0;
+      score = 0;
       gameOver = false;
+      updateScore();
 
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -124,11 +194,14 @@
 
       document.querySelectorAll(".cell").forEach(cell => {
         cell.addEventListener("click", () => {
-          if (gameOver || cell.classList.contains("revealed")) return;
-
+          if (gameOver) return;
           const x = +cell.dataset.x;
           const y = +cell.dataset.y;
+          if (cell.classList.contains("revealed")) return;
+
           clickCount++;
+          score++;
+          updateScore();
 
           if (clickCount < 5) {
             const val = fixedNumbers[clickCount - 1];
@@ -137,35 +210,27 @@
           } else {
             gameOver = true;
             displayLoveMessage(x, y);
-            message.textContent = "愛你攸 💘";
+          
           }
         });
       });
 
       message.textContent = "";
-      resizeBoard(); // 呼叫縮放
     }
 
-    function resizeBoard() {
-      const screenWidth = window.innerWidth;
-      const idealWidth = width * 32; // 每格30px + 2px間隔
-      const scale = Math.min(1, screenWidth / idealWidth);
-      board.style.transform = `scale(${scale})`;
-    }
-
-    window.addEventListener("resize", resizeBoard);
-
+    // 畫字函數，用💥填滿點陣位置
     function drawLetter(letter, startX, startY) {
       const pattern = letters[letter];
       if (!pattern) return;
-      for(let y = 0; y < pattern.length; y++) {
-        for(let x = 0; x < pattern[y].length; x++) {
+      for(let y=0; y < pattern.length; y++) {
+        for(let x=0; x < pattern[y].length; x++) {
           const cell = document.querySelector(`[data-x='${startX + x}'][data-y='${startY + y}']`);
           if(cell) {
             if(pattern[y][x] === 1) {
               cell.classList.add("revealed");
               cell.style.backgroundColor = "#e0e0e0";
               cell.textContent = "💥";
+              cell.style.color = "#ff1493";
             } else {
               cell.classList.remove("revealed");
               cell.style.backgroundColor = "#c0c0c0";
@@ -177,6 +242,7 @@
     }
 
     function displayLoveMessage(lastX, lastY) {
+      // 清空所有格子，但保留最後點擊格子空白
       document.querySelectorAll(".cell").forEach(cell => {
         const cx = +cell.dataset.x;
         const cy = +cell.dataset.y;
@@ -188,12 +254,14 @@
           cell.style.borderLeft = "2px solid #fff";
           cell.style.borderBottom = "2px solid #7f7f7f";
           cell.style.borderRight = "2px solid #7f7f7f";
+          cell.style.color = "#000";
         } else {
           cell.textContent = "";
           cell.classList.add("revealed");
           cell.style.backgroundColor = "#e0e0e0";
           cell.style.border = "1px solid #7f7f7f";
           cell.style.boxShadow = "inset 1px 1px 2px #fff, inset -1px -1px 2px #7f7f7f";
+          cell.style.color = "#000";
         }
       });
 
@@ -202,10 +270,12 @@
       const upperY = 3;
       const lowerY = 11;
 
+      // 畫「I❤U」
       drawLetter("I", startX, upperY);
       drawLetter("❤", startX + 5 + gap, upperY);
       drawLetter("U", startX + (5 + gap)*2, upperY);
 
+      // 畫「520」
       drawLetter("5", startX, lowerY);
       drawLetter("2", startX + 5 + gap, lowerY);
       drawLetter("0", startX + (5 + gap)*2, lowerY);
